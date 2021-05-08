@@ -2,6 +2,7 @@ package com.xiaobai.rpcdemo.core.provider.config;
 
 import com.xiaobai.rpcdemo.core.provider.annotation.Service;
 import com.xiaobai.rpcdemo.core.provider.entity.ProviderService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -29,7 +30,7 @@ public class ProviderServicePostProcessor implements BeanPostProcessor {
         Class<?> clazz = bean.getClass();
         Annotation[] annotations = clazz.getAnnotations();
         for(Annotation annotation : annotations) {
-            //如果有@Service注解修饰的bean，则进行缓存，待所有bean加载完毕后向eureka中注册
+            //如果有@Service注解修饰的bean，则进行缓存，待所有bean加载完毕后向nacos中注册
             if(annotation instanceof Service) {
                 logger.info("find provider service:{}", clazz.getName());
                 Class<?>[] interfaces = clazz.getInterfaces();
@@ -40,7 +41,7 @@ public class ProviderServicePostProcessor implements BeanPostProcessor {
                     }
                     ProviderService providerService = new ProviderService();
                     providerService.setImpl(clazz.getName());
-                    if(!("").equals(((Service) annotation).group())){
+                    if(!StringUtils.isBlank(((Service) annotation).group())){
                         providerService.setGroup(((Service) annotation).group());
                     }
                     list.add(providerService);

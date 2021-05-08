@@ -23,7 +23,8 @@ import java.util.Enumeration;
 @Data
 public class MetaInfo implements ApplicationListener<WebServerInitializedEvent>, ApplicationContextAware {
     private String name;
-    private String url;
+    private String ip;
+    private Integer port;
     private ApplicationContext applicationContext;
 
     private static final String URL_PREFIX = "http://";
@@ -39,7 +40,7 @@ public class MetaInfo implements ApplicationListener<WebServerInitializedEvent>,
     @Override
     public void onApplicationEvent(WebServerInitializedEvent event) {
         try {
-            String ip = "";
+            String ipAddress = "";
             Enumeration<NetworkInterface> allNetInterfaces = NetworkInterface.getNetworkInterfaces();
             while (allNetInterfaces.hasMoreElements()){
                 NetworkInterface netInterface = allNetInterfaces.nextElement();
@@ -48,13 +49,14 @@ public class MetaInfo implements ApplicationListener<WebServerInitializedEvent>,
                     InetAddress tmp = addresses.nextElement();
                     if (tmp instanceof Inet4Address && !tmp.isLoopbackAddress()
                             && !tmp.getHostAddress().contains(URL_PORT_PREFIX)){
-                        ip = tmp.getHostAddress();
+                        ipAddress = tmp.getHostAddress();
                         break;
                     }
                 }
             }
             int port = event.getWebServer().getPort();
-            this.url = URL_PREFIX + ip + URL_PORT_PREFIX + port;
+            this.ip = ipAddress;
+            this.port = port;
             this.name = this.applicationContext.getId();
         } catch (Exception e) {
             logger.error("init rpcdemo exception:{}", e.toString());

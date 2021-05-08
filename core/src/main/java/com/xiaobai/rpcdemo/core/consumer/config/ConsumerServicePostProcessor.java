@@ -92,7 +92,7 @@ public class ConsumerServicePostProcessor implements BeanPostProcessor {
                                 }
                             } catch (Exception e) {
                                 logger.error("call remote service exception:{}", e.toString());
-                                throw new RemoteCallException(e.toString());
+                                throw new RemoteCallException(e.getMessage());
                             }
                         }
                     });

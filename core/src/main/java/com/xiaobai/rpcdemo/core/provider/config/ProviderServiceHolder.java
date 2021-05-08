@@ -26,4 +26,8 @@ public class ProviderServiceHolder {
     public void setServiceList(String className, List<ProviderService> list) {
         this.remoteServiceMap.put(className, list);
     }
+
+    public Map<String, List<ProviderService>> getServiceMap() {
+        return this.remoteServiceMap;
+    }
 }

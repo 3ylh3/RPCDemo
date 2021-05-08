@@ -15,4 +15,5 @@ public class RpcProperties {
     private String name;
     private Integer readTimeout;
     private Integer connectTimeout;
+    private String nacosAddress;
 }
