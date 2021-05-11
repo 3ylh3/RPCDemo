@@ -1,21 +1,20 @@
 package com.xiaobai.rpcdemo.core.consumer.config;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.alibaba.nacos.api.naming.pojo.ListView;
+import com.alibaba.nacos.common.utils.ConcurrentHashSet;
 import com.xiaobai.rpcdemo.core.common.RpcProperties;
 import com.xiaobai.rpcdemo.core.consumer.entity.RemoteService;
+import com.xiaobai.rpcdemo.core.consumer.utils.RemoteServiceMapUtil;
 import com.xiaobai.rpcdemo.core.exception.ConsumerSyncException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -26,18 +25,18 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class RemoteServiceHolder {
     private Map<String, List<RemoteService>> remoteServiceMap;
+    private Set<String> providerSet;
+    private SyncRemoteServiceListener syncRemoteServiceListener;
 
     private static final int PAGE_NO = 0;
     private static final int PAGE_SIZE = 65536;
-    private static final String GROUP = "group";
-    private static final String IMPL = "impl";
-    private static final String URL_PREFIX = "http://";
-    private static final String URL_MIDFIX = ":";
     private static final Logger logger = LoggerFactory.getLogger(RemoteServiceHolder.class);
 
     public void init(RpcProperties rpcProperties) {
         logger.info("consumer init start...");
         this.remoteServiceMap = new ConcurrentHashMap<>();
+        this.providerSet = new ConcurrentHashSet<>();
+        this.syncRemoteServiceListener = new SyncRemoteServiceListener(this.remoteServiceMap);
         try{
             if(StringUtils.isBlank(rpcProperties.getNacosAddress())) {
                 throw new ConsumerSyncException("nacos address is null");
@@ -47,46 +46,24 @@ public class RemoteServiceHolder {
             ListView<String> services = naming.getServicesOfServer(PAGE_NO, PAGE_SIZE);
             List<String> list = services.getData();
             for(String service : list) {
+                //缓存providerName
+                this.providerSet.add(service);
                 //获取服务对应健康实例
                 List<Instance> instances = naming.selectInstances(service, true);
-                for(Instance instance : instances) {
-                    //获取对应元数据
-                    Map<String, String> instanceMetaData = instance.getMetadata();
-                    //循环处理元数据，获取接口名、实现类以及group，缓存到本地
-                    for(Map.Entry<String, String> entry : instanceMetaData.entrySet()) {
-                        String interfaceName = entry.getKey();
-                        JSONObject jsonObject = JSON.parseObject(entry.getValue());
-                        String group = jsonObject.getString(GROUP);
-                        String impl = jsonObject.getString(IMPL);
-                        List<RemoteService> remoteServiceList = getRemoteService(interfaceName);
-                        if(null == remoteServiceList) {
-                            remoteServiceList = new ArrayList<>();
-                        }
-                        RemoteService remoteService = new RemoteService();
-                        remoteService.setProviderName(service);
-                        remoteService.setUrl(URL_PREFIX + instance.getIp() + URL_MIDFIX + instance.getPort());
-                        remoteService.setGroup(group);
-                        remoteService.setImpl(impl);
-                        remoteServiceList.add(remoteService);
-                        this.remoteServiceMap.put(interfaceName, remoteServiceList);
-                    }
-                }
+                RemoteServiceMapUtil.updateRemoteServiceMap(service, this.remoteServiceMap, instances);
             }
-            services.getCount();
+            //监听提供者
+            for(String provider : this.providerSet) {
+                naming.subscribe(provider, this.syncRemoteServiceListener);
+            }
+            logger.info("consumer init success");
         } catch (Exception e) {
-            logger.error("consumer init exception:{}", e);
+            logger.error("consumer init exception:{}", e.getMessage());
             throw new ConsumerSyncException(e.getMessage());
         }
     }
 
     public List<RemoteService> getRemoteService(String name) {
         return this.remoteServiceMap.get(name);
-    }
-
-    /**
-     * 更新本地缓存
-     */
-    private void syncRemoteService() {
-
     }
 }

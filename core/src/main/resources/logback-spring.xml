@@ -124,6 +124,10 @@
         <appender-ref ref="CONSUMER_SYNC" />
     </logger>
 
+    <logger name="com.xiaobai.rpcdemo.core.consumer.config.SyncRemoteServiceListener" level="INFO" additivity="false">
+        <appender-ref ref="CONSUMER_SYNC" />
+    </logger>
+
     <!--默认配置-->
     <include resource="org/springframework/boot/logging/logback/defaults.xml" />
     <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
