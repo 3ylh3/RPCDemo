@@ -31,6 +31,7 @@ public class RemoteServiceMapUtil {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
                     String group = jsonObject.getString(CommonConstant.GROUP);
                     String impl = jsonObject.getString(CommonConstant.IMPL);
+                    Double weight = jsonObject.getDouble(CommonConstant.WEIGHT);
                     List<RemoteService> remoteServiceList = remoteServiceMap.get(interfaceName);
                     if(null == remoteServiceList) {
                         remoteServiceList = new ArrayList<>();
@@ -40,6 +41,7 @@ public class RemoteServiceMapUtil {
                     remoteService.setUrl(CommonConstant.URL_PREFIX + instance.getIp() + CommonConstant.URL_MIDFIX + instance.getPort());
                     remoteService.setGroup(group);
                     remoteService.setImpl(impl);
+                    remoteService.setWeight(weight);
                     remoteServiceList.add(remoteService);
                     remoteServiceMap.put(interfaceName, remoteServiceList);
                 }

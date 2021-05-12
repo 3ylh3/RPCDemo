@@ -61,7 +61,18 @@ rpcdemo.name=provider-demo
 rpcdemo.nacosAddress=127.0.0.1:8848
 ```
 # 负载均衡策略
-现阶段只支持随机调用
-
+支持轮询、随机以及按权重选择三种策略，默认为轮询。
+消费者配置负载均衡策略：
+```java
+@Remote(loadBlance = LoadBalanceEnum.WEIGHT)
+```
+其中：
+LoadBalanceEnum.ROUND:轮询
+LoadBalanceEnum.RANDOM:随机
+LoadBalanceEnum.WEIGHT:按权重选择
+提供者设置权重：
+```java
+@Service(weight = 10)
+```
 # jar包下载
 https://github.com/3ylh3/RPCDemo/releases

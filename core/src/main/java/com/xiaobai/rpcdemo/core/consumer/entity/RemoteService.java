@@ -10,8 +10,24 @@ import lombok.Data;
  */
 @Data
 public class RemoteService {
+    /**
+     * 提供者name
+     */
     private String providerName;
+    /**
+     * url
+     */
     private String url;
+    /**
+     * 实现类名称
+     */
     private String impl;
+    /**
+     * 组
+     */
     private String group;
+    /**
+     * 权重
+     */
+    private Double weight;
 }

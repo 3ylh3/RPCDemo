@@ -59,6 +59,7 @@ public class ProviderRegistry implements ApplicationListener<ApplicationReadyEve
                 for (ProviderService providerService : list) {
                     String impl = providerService.getImpl();
                     String group = providerService.getGroup();
+                    Double weight = providerService.getWeight();
                     JSONArray jsonArray = JSON.parseArray(instanceMeta.get(interfaceName));
                     if(null == jsonArray) {
                         jsonArray = new JSONArray();
@@ -66,6 +67,7 @@ public class ProviderRegistry implements ApplicationListener<ApplicationReadyEve
                     JSONObject jsonObject =  new JSONObject();
                     jsonObject.put(CommonConstant.GROUP, group);
                     jsonObject.put(CommonConstant.IMPL, impl);
+                    jsonObject.put(CommonConstant.WEIGHT, weight);
                     jsonArray.add(jsonObject);
                     instanceMeta.put(interfaceName, jsonArray.toJSONString());
                 }

@@ -10,6 +10,16 @@ import lombok.Data;
  */
 @Data
 public class ProviderService {
+    /**
+     * 实现类名称
+     */
     private String impl;
+    /**
+     * 组
+     */
     private String group;
+    /**
+     * 权重
+     */
+    private Double weight;
 }

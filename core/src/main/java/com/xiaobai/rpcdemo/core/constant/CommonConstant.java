@@ -9,6 +9,7 @@ package com.xiaobai.rpcdemo.core.constant;
 public class CommonConstant {
     public static final String GROUP = "group";
     public static final String IMPL = "impl";
+    public static final String WEIGHT = "weight";
     public static final String URL_PREFIX = "http://";
     public static final String URL_MIDFIX = ":";
 }

@@ -44,6 +44,7 @@ public class ProviderServicePostProcessor implements BeanPostProcessor {
                     if(!StringUtils.isBlank(((Service) annotation).group())){
                         providerService.setGroup(((Service) annotation).group());
                     }
+                    providerService.setWeight(((Service) annotation).weight());
                     list.add(providerService);
                     providerServiceHolder.setServiceList(interfaceClazz.getName(), list);
                 }

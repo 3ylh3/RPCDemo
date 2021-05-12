@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RemoteServiceHolder {
     private Map<String, List<RemoteService>> remoteServiceMap;
     private Set<String> providerSet;
+    private Map<String, Integer> orderMap;
     private NamingService naming;
     private SyncRemoteServiceListener syncRemoteServiceListener;
 
@@ -40,6 +41,7 @@ public class RemoteServiceHolder {
         logger.info("consumer init start...");
         this.remoteServiceMap = new ConcurrentHashMap<>();
         this.providerSet = new ConcurrentHashSet<>();
+        this.orderMap = new ConcurrentHashMap<>();
         this.syncRemoteServiceListener = new SyncRemoteServiceListener(this.remoteServiceMap);
         try{
             if(StringUtils.isBlank(rpcProperties.getNacosAddress())) {
@@ -106,5 +108,13 @@ public class RemoteServiceHolder {
             logger.error("sync remote service exception:{}", e.getMessage());
             throw new ConsumerSyncException(e.getMessage());
         }
+    }
+
+    public void setOrder(String key, Integer order) {
+        this.orderMap.put(key, order);
+    }
+
+    public Integer getOrder(String key) {
+        return this.orderMap.get(key);
     }
 }

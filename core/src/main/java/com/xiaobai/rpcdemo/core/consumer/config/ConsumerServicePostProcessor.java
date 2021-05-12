@@ -6,6 +6,7 @@ import com.xiaobai.rpcdemo.core.common.RpcProperties;
 import com.xiaobai.rpcdemo.core.common.TransferDTO;
 import com.xiaobai.rpcdemo.core.consumer.annotation.Remote;
 import com.xiaobai.rpcdemo.core.consumer.entity.RemoteService;
+import com.xiaobai.rpcdemo.core.enums.LoadBalanceEnum;
 import com.xiaobai.rpcdemo.core.enums.MessageCodeEnum;
 import com.xiaobai.rpcdemo.core.exception.RemoteCallException;
 import org.nustaq.serialization.FSTConfiguration;
@@ -23,7 +24,9 @@ import sun.misc.BASE64Encoder;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 远程service前置处理
@@ -42,6 +45,7 @@ public class ConsumerServicePostProcessor implements BeanPostProcessor {
     private MetaInfo metaInfo;
 
     private static final String PROVIDER_CONTROLLER = "/provider";
+    private static final String DELIMITER = "|";
 
     private static final Logger logger = LoggerFactory.getLogger(ConsumerServicePostProcessor.class);
 
@@ -60,13 +64,54 @@ public class ConsumerServicePostProcessor implements BeanPostProcessor {
                         public Object intercept(Object object, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
                             String providerName = field.getAnnotation(Remote.class).providerName();
                             String group = field.getAnnotation(Remote.class).group();
+                            LoadBalanceEnum loadBalance = field.getAnnotation(Remote.class).loadBlance();
                             List<RemoteService> list = remoteServiceHolder.getRemoteService(providerName, group, field.getType().getName());
                             if(null == list || list.isEmpty()) {
                                 logger.error("no provider find,providerName:{}, group:{}, service:{}", providerName, group, field.getType().getName());
                                 throw new RemoteCallException("no provider find,providerName:" + providerName + ", group:" + group + ", service:" + field.getType().getName());
                             }
-                            double random = Math.random() * list.size();
-                            RemoteService remoteService = list.get((int)random);
+                            RemoteService remoteService = null;
+                            switch (loadBalance) {
+                                case ROUND:
+                                    //轮询
+                                    String key = providerName + DELIMITER + group + DELIMITER + field.getType().getName();
+                                    Integer order = remoteServiceHolder.getOrder(key);
+                                    if(null == order) {
+                                        order = 0;
+                                    }
+                                    remoteService = list.get(order);
+                                    remoteServiceHolder.setOrder(key, (order + 1) % list.size());
+                                    break;
+                                case RANDOM:
+                                    //随机
+                                    double random = Math.random() * list.size();
+                                    remoteService = list.get((int)random);
+                                    break;
+                                case WEIGHT:
+                                    //权重
+                                    //有序map用于存储list集合下标以及对应权重
+                                    Map<Integer, Double> map = new LinkedHashMap<>();
+                                    int totalWeight = 0;
+                                    for(int i = 0;i < list.size();i++) {
+                                        double weight = list.get(i).getWeight();
+                                        map.put(i, weight);
+                                        totalWeight += weight;
+                                    }
+                                    double randomWithWeight = Math.random() * totalWeight;
+                                    double tmp = 0d;
+                                    for(Map.Entry<Integer, Double> entry : map.entrySet()) {
+                                        tmp += entry.getValue();
+                                        if(randomWithWeight < tmp) {
+                                            remoteService = list.get(entry.getKey());
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    logger.error("loadBalance type error:{}", loadBalance.getValue());
+                                    throw new RemoteCallException("loadBalance type error:" + loadBalance.getValue());
+                            }
+
                             TransferDTO transferDTO = new TransferDTO();
                             String consumerName = null == rpcProperties.getName() ? metaInfo.getName() : rpcProperties.getName();
                             transferDTO.setConsumerName(consumerName);
