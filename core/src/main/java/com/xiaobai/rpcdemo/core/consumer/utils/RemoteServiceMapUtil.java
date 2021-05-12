@@ -1,6 +1,7 @@
 package com.xiaobai.rpcdemo.core.consumer.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.xiaobai.rpcdemo.core.constant.CommonConstant;
@@ -25,20 +26,23 @@ public class RemoteServiceMapUtil {
             //循环处理元数据，获取接口名、实现类以及group，更新本地缓存
             for(Map.Entry<String, String> entry : instanceMetaData.entrySet()) {
                 String interfaceName = entry.getKey();
-                JSONObject jsonObject = JSON.parseObject(entry.getValue());
-                String group = jsonObject.getString(CommonConstant.GROUP);
-                String impl = jsonObject.getString(CommonConstant.IMPL);
-                List<RemoteService> remoteServiceList = remoteServiceMap.get(interfaceName);
-                if(null == remoteServiceList) {
-                    remoteServiceList = new ArrayList<>();
+                JSONArray jsonArray = JSON.parseArray(entry.getValue());
+                for(int i = 0;i < jsonArray.size();i++) {
+                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                    String group = jsonObject.getString(CommonConstant.GROUP);
+                    String impl = jsonObject.getString(CommonConstant.IMPL);
+                    List<RemoteService> remoteServiceList = remoteServiceMap.get(interfaceName);
+                    if(null == remoteServiceList) {
+                        remoteServiceList = new ArrayList<>();
+                    }
+                    RemoteService remoteService = new RemoteService();
+                    remoteService.setProviderName(providerName);
+                    remoteService.setUrl(CommonConstant.URL_PREFIX + instance.getIp() + CommonConstant.URL_MIDFIX + instance.getPort());
+                    remoteService.setGroup(group);
+                    remoteService.setImpl(impl);
+                    remoteServiceList.add(remoteService);
+                    remoteServiceMap.put(interfaceName, remoteServiceList);
                 }
-                RemoteService remoteService = new RemoteService();
-                remoteService.setProviderName(providerName);
-                remoteService.setUrl(CommonConstant.URL_PREFIX + instance.getIp() + CommonConstant.URL_MIDFIX + instance.getPort());
-                remoteService.setGroup(group);
-                remoteService.setImpl(impl);
-                remoteServiceList.add(remoteService);
-                remoteServiceMap.put(interfaceName, remoteServiceList);
             }
         }
     }

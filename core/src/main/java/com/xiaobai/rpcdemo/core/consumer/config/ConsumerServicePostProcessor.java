@@ -58,10 +58,12 @@ public class ConsumerServicePostProcessor implements BeanPostProcessor {
                     enhancer.setCallback(new MethodInterceptor() {
                         @Override
                         public Object intercept(Object object, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
-                            List<RemoteService> list = remoteServiceHolder.getRemoteService(field.getType().getName());
+                            String providerName = field.getAnnotation(Remote.class).providerName();
+                            String group = field.getAnnotation(Remote.class).group();
+                            List<RemoteService> list = remoteServiceHolder.getRemoteService(providerName, group, field.getType().getName());
                             if(null == list || list.isEmpty()) {
-                                logger.error("no provider find,service:{}", field.getType().getName());
-                                throw new RemoteCallException("no provider find,service:" + field.getType().getName());
+                                logger.error("no provider find,providerName:{}, group:{}, service:{}", providerName, group, field.getType().getName());
+                                throw new RemoteCallException("no provider find,providerName:" + providerName + ", group:" + group + ", service:" + field.getType().getName());
                             }
                             double random = Math.random() * list.size();
                             RemoteService remoteService = list.get((int)random);

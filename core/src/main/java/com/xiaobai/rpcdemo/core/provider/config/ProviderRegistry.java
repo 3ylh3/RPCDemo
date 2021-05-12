@@ -1,5 +1,7 @@
 package com.xiaobai.rpcdemo.core.provider.config;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
@@ -57,10 +59,15 @@ public class ProviderRegistry implements ApplicationListener<ApplicationReadyEve
                 for (ProviderService providerService : list) {
                     String impl = providerService.getImpl();
                     String group = providerService.getGroup();
-                    JSONObject jsonObject = new JSONObject();
+                    JSONArray jsonArray = JSON.parseArray(instanceMeta.get(interfaceName));
+                    if(null == jsonArray) {
+                        jsonArray = new JSONArray();
+                    }
+                    JSONObject jsonObject =  new JSONObject();
                     jsonObject.put(CommonConstant.GROUP, group);
                     jsonObject.put(CommonConstant.IMPL, impl);
-                    instanceMeta.put(interfaceName, jsonObject.toJSONString());
+                    jsonArray.add(jsonObject);
+                    instanceMeta.put(interfaceName, jsonArray.toJSONString());
                 }
             }
             instance.setMetadata(instanceMeta);

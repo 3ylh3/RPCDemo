@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +46,7 @@ public class RemoteServiceHolder {
                 throw new ConsumerSyncException("nacos address is null");
             }
             this.naming = NamingFactory.createNamingService(rpcProperties.getNacosAddress());
-            getRemoteService(this.remoteServiceMap);
+            queryRemoteService(this.remoteServiceMap);
             logger.info("consumer init success");
         } catch (Exception e) {
             logger.error("consumer init exception:{}", e.getMessage());
@@ -53,8 +54,19 @@ public class RemoteServiceHolder {
         }
     }
 
-    public List<RemoteService> getRemoteService(String name) {
-        return this.remoteServiceMap.get(name);
+    public List<RemoteService> getRemoteService(String providerName, String group, String name) {
+        List<RemoteService> result = new ArrayList<>();
+        List<RemoteService> list =  this.remoteServiceMap.get(name);
+        for(RemoteService remoteService : list) {
+            if(!StringUtils.isBlank(providerName) && !StringUtils.equals(remoteService.getProviderName(), providerName)) {
+                continue;
+            }
+            if(!StringUtils.isBlank(group) && !StringUtils.equals(remoteService.getGroup(), group)) {
+                continue;
+            }
+            result.add(remoteService);
+        }
+        return result;
     }
 
     /**
@@ -64,7 +76,7 @@ public class RemoteServiceHolder {
     private void syncRemoteService() {
         logger.info("start sync remote service...");
         Map<String, List<RemoteService>> tmpMap = new ConcurrentHashMap<>();
-        getRemoteService(tmpMap);
+        queryRemoteService(tmpMap);
         this.remoteServiceMap = tmpMap;
         this.syncRemoteServiceListener.setRemoteServiceMap(this.remoteServiceMap);
         logger.info("sync success");
@@ -74,7 +86,7 @@ public class RemoteServiceHolder {
      * 获取nacos中注册的服务实例，缓存到本地
      * @return
      */
-    private void getRemoteService(Map<String, List<RemoteService>> remoteServiceMap) {
+    private void queryRemoteService(Map<String, List<RemoteService>> remoteServiceMap) {
         try {
             //获取nacos中注册的所有服务
             ListView<String> services = this.naming.getServicesOfServer(PAGE_NO, PAGE_SIZE);

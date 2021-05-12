@@ -24,6 +24,10 @@ public class Test {
     }
 }
 ```
+@Remote注解可以指定调用的服务提供者名(rpcdemo.name)以及组（通过providerName以及group指定）,如果未指定则从所有服务提供者以及所有组中选择：
+```java
+@Remote(providerName = "test", group = "test")
+```
 配置文件中配置相关配置项：
 ```properties
 #调用超时时间设置
@@ -44,6 +48,10 @@ public class TestImpl implements TestService {
         return "test";
     }
 }
+```
+@Service注解可以指定服务所属组（通过group指定）：
+```java
+@Service(group = "test")
 ```
 配置文件中配置相关配置项：
 ```properties
