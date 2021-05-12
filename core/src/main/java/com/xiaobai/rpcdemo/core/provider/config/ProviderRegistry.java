@@ -6,6 +6,7 @@ import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.xiaobai.rpcdemo.core.common.MetaInfo;
 import com.xiaobai.rpcdemo.core.common.RpcProperties;
+import com.xiaobai.rpcdemo.core.constant.CommonConstant;
 import com.xiaobai.rpcdemo.core.exception.ServiceRegistryException;
 import com.xiaobai.rpcdemo.core.provider.entity.ProviderService;
 import org.apache.commons.lang3.StringUtils;
@@ -57,8 +58,8 @@ public class ProviderRegistry implements ApplicationListener<ApplicationReadyEve
                     String impl = providerService.getImpl();
                     String group = providerService.getGroup();
                     JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("group", group);
-                    jsonObject.put("impl", impl);
+                    jsonObject.put(CommonConstant.GROUP, group);
+                    jsonObject.put(CommonConstant.IMPL, impl);
                     instanceMeta.put(interfaceName, jsonObject.toJSONString());
                 }
             }
@@ -66,7 +67,7 @@ public class ProviderRegistry implements ApplicationListener<ApplicationReadyEve
             naming.registerInstance(providerName, instance);
             logger.info("registry success");
         } catch (Exception e) {
-            logger.error("registry error,exception:{}", e);
+            logger.error("registry error,exception:{}", e.getMessage());
             throw new ServiceRegistryException(e.getMessage());
         }
     }

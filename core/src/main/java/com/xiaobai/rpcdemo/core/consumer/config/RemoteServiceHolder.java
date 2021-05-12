@@ -12,6 +12,8 @@ import com.xiaobai.rpcdemo.core.exception.ConsumerSyncException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RemoteServiceHolder {
     private Map<String, List<RemoteService>> remoteServiceMap;
     private Set<String> providerSet;
+    private NamingService naming;
     private SyncRemoteServiceListener syncRemoteServiceListener;
 
     private static final int PAGE_NO = 0;
@@ -41,21 +44,8 @@ public class RemoteServiceHolder {
             if(StringUtils.isBlank(rpcProperties.getNacosAddress())) {
                 throw new ConsumerSyncException("nacos address is null");
             }
-            NamingService naming = NamingFactory.createNamingService(rpcProperties.getNacosAddress());
-            //获取nacos中注册的所有服务
-            ListView<String> services = naming.getServicesOfServer(PAGE_NO, PAGE_SIZE);
-            List<String> list = services.getData();
-            for(String service : list) {
-                //缓存providerName
-                this.providerSet.add(service);
-                //获取服务对应健康实例
-                List<Instance> instances = naming.selectInstances(service, true);
-                RemoteServiceMapUtil.updateRemoteServiceMap(service, this.remoteServiceMap, instances);
-            }
-            //监听提供者
-            for(String provider : this.providerSet) {
-                naming.subscribe(provider, this.syncRemoteServiceListener);
-            }
+            this.naming = NamingFactory.createNamingService(rpcProperties.getNacosAddress());
+            getRemoteService(this.remoteServiceMap);
             logger.info("consumer init success");
         } catch (Exception e) {
             logger.error("consumer init exception:{}", e.getMessage());
@@ -65,5 +55,44 @@ public class RemoteServiceHolder {
 
     public List<RemoteService> getRemoteService(String name) {
         return this.remoteServiceMap.get(name);
+    }
+
+    /**
+     * 每隔30秒定时同步nacos中最新服务实例列表
+     */
+    @Scheduled(cron = "0/30 * * * * ? ")
+    private void syncRemoteService() {
+        logger.info("start sync remote service...");
+        Map<String, List<RemoteService>> tmpMap = new ConcurrentHashMap<>();
+        getRemoteService(tmpMap);
+        this.remoteServiceMap = tmpMap;
+        this.syncRemoteServiceListener.setRemoteServiceMap(this.remoteServiceMap);
+        logger.info("sync success");
+    }
+
+    /**
+     * 获取nacos中注册的服务实例，缓存到本地
+     * @return
+     */
+    private void getRemoteService(Map<String, List<RemoteService>> remoteServiceMap) {
+        try {
+            //获取nacos中注册的所有服务
+            ListView<String> services = this.naming.getServicesOfServer(PAGE_NO, PAGE_SIZE);
+            List<String> list = services.getData();
+            for (String service : list) {
+                //缓存providerName
+                this.providerSet.add(service);
+                //获取服务对应健康实例
+                List<Instance> instances = this.naming.selectInstances(service, true);
+                RemoteServiceMapUtil.updateRemoteServiceMap(service, remoteServiceMap, instances);
+            }
+            //监听提供者
+            for(String provider : this.providerSet) {
+                this.naming.subscribe(provider, this.syncRemoteServiceListener);
+            }
+        } catch (Exception e){
+            logger.error("sync remote service exception:{}", e.getMessage());
+            throw new ConsumerSyncException(e.getMessage());
+        }
     }
 }

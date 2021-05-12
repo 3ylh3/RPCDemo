@@ -3,6 +3,7 @@ package com.xiaobai.rpcdemo.core.consumer.utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.naming.pojo.Instance;
+import com.xiaobai.rpcdemo.core.constant.CommonConstant;
 import com.xiaobai.rpcdemo.core.consumer.entity.RemoteService;
 
 import java.util.ArrayList;
@@ -16,10 +17,6 @@ import java.util.Map;
  * @date 2021-05-11 17:16:09
  */
 public class RemoteServiceMapUtil {
-    private static final String GROUP = "group";
-    private static final String IMPL = "impl";
-    private static final String URL_PREFIX = "http://";
-    private static final String URL_MIDFIX = ":";
 
     public static void updateRemoteServiceMap(String providerName, Map<String, List<RemoteService>> remoteServiceMap, List<Instance> instances) {
         for(Instance instance : instances) {
@@ -29,15 +26,15 @@ public class RemoteServiceMapUtil {
             for(Map.Entry<String, String> entry : instanceMetaData.entrySet()) {
                 String interfaceName = entry.getKey();
                 JSONObject jsonObject = JSON.parseObject(entry.getValue());
-                String group = jsonObject.getString(GROUP);
-                String impl = jsonObject.getString(IMPL);
+                String group = jsonObject.getString(CommonConstant.GROUP);
+                String impl = jsonObject.getString(CommonConstant.IMPL);
                 List<RemoteService> remoteServiceList = remoteServiceMap.get(interfaceName);
                 if(null == remoteServiceList) {
                     remoteServiceList = new ArrayList<>();
                 }
                 RemoteService remoteService = new RemoteService();
                 remoteService.setProviderName(providerName);
-                remoteService.setUrl(URL_PREFIX + instance.getIp() + URL_MIDFIX + instance.getPort());
+                remoteService.setUrl(CommonConstant.URL_PREFIX + instance.getIp() + CommonConstant.URL_MIDFIX + instance.getPort());
                 remoteService.setGroup(group);
                 remoteService.setImpl(impl);
                 remoteServiceList.add(remoteService);

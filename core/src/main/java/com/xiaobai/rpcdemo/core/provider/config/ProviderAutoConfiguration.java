@@ -32,11 +32,13 @@ public class ProviderAutoConfiguration {
 
     @Bean("providerPostProcessor")
     @DependsOn({"metaInfo", "providerServiceHolder"})
+    @ConditionalOnMissingBean(ProviderServicePostProcessor.class)
     public BeanPostProcessor initBeanPostProcessor() {
         return new ProviderServicePostProcessor();
     }
 
     @Bean
+    @ConditionalOnMissingBean(ProviderRegistry.class)
     public ApplicationListener<ApplicationReadyEvent> initApplicationListener() {
         return new ProviderRegistry();
     }

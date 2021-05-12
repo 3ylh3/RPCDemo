@@ -29,6 +29,10 @@ public class SyncRemoteServiceListener implements EventListener {
         this.remoteServiceMap = remoteServiceMap;
     }
 
+    public void setRemoteServiceMap(Map<String, List<RemoteService>> remoteServiceMap) {
+        this.remoteServiceMap = remoteServiceMap;
+    }
+
     /**
      * 监听nacos中provider变化事件，更新本地缓存
      * @param event

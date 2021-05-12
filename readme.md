@@ -24,6 +24,16 @@ public class Test {
     }
 }
 ```
+配置文件中配置相关配置项：
+```properties
+#调用超时时间设置
+rpcdemo.readTimeout=1000
+rpcdemo.connectTimeout=1500
+#nacos中注册的服务名，为空则默认为spring.application.name
+rpcdemo.name=consumer-demo
+#nacos地址
+rpcdemo.nacosAddress=127.0.0.1:8848
+```
 # 提供者端
 服务提供者端在对应接口的实现类上添加@Service注解(com.xiaobai.rpcdemo.core.provider.annotation.Service):
 ```java
@@ -34,6 +44,13 @@ public class TestImpl implements TestService {
         return "test";
     }
 }
+```
+配置文件中配置相关配置项：
+```properties
+#nacos中注册的服务名，为空则默认为spring.application.name
+rpcdemo.name=provider-demo
+#nacos地址
+rpcdemo.nacosAddress=127.0.0.1:8848
 ```
 # 负载均衡策略
 现阶段只支持随机调用
