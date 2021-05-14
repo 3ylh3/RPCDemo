@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- bootstrap-table -->
+    <link href="css/bootstrap-table.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim 和 Respond.js 是为了让 IE8 支持 HTML5 元素和媒体查询（media queries）功能 -->
+    <!-- 警告：通过 file:// 协议（就是直接将 html 页面拖拽到浏览器中）访问页面时 Respond.js 不起作用 -->
+    <!--[if lt IE 9]>
+    <script src="js/html5shiv.min.js"></script>
+    <script src="js/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<div class="container-fluid">
+    <form class="form-inline" style="margin-bottom: 20px;">
+        <div class="form-group">
+            <label for="serviceName">服务名称：</label>
+            <input type="text" class="form-control" id="serviceName">
+        </div>
+        <div class="form-group">
+            <label for="providerName">提供者名称：</label>
+            <input type="text" class="form-control" id="providerName">
+        </div>
+        <div class="form-group">
+            <label for="group">所属组：</label>
+            <input type="text" class="form-control" id="group">
+        </div>
+        <button id="query" type="button" class="btn btn-primary">查询</button>
+    </form>
+    <div id="toolbar" class="btn-group" role="group">
+        <button type="button" class="btn btn-primary" onclick="setWeight()">设置权重</button>
+    </div>
+    <table id="table" data-toggle="table" data-url="/getServiceList" data-pagination="true"
+           data-side-pagination="server" data-page-size="20" data-page-list="[20, 30, 50, 100]"
+           data-query-params="queryParams" data-pagination-loop="false" data-method="post"
+           data-click-to-select="true" data-toolbar="#toolbar">
+        <thead>
+        <tr>
+            <th data-field="state" data-radio="true"></th>
+            <th data-field="serviceName">服务名称</th>
+            <th data-field="impl">实现类名称</th>
+            <th data-field="providerName">提供者名称</th>
+            <th data-field="group">所属组</th>
+            <th data-field="url">提供者url</th>
+            <th data-field="weight">权重</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+
+<div id="messageModal" class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">提示</h4>
+            </div>
+            <div class="modal-body">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="setWeightModal" class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="setWeightModalLabel">设置权重</h4>
+            </div>
+            <div class="modal-body">
+                <input id="tmpProviderName" hidden/>
+                <input id="tmpUrl" hidden/>
+                <input id="tmpServiceName" hidden/>
+                <input id="tmpImpl" hidden/>
+                <form>
+                    <div class="form-group">
+                        <label for="weight">权重</label>
+                        <input type="text" class="form-control" id="weight">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="submitWeight()">提交</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+<script src="js/jquery.min.js"></script>
+<!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+<script src="js/bootstrap.min.js"></script>
+<!-- bootstrap-table -->
+<script src="js/bootstrap-table.min.js"></script>
+<script src="js/bootstrap-table-zh-CN.min.js"></script>
+<!-- 公共js -->
+<script src="js/common/common.js"></script>
+<script>
+    $(document).ready(function() {
+        //选中菜单
+        parent.selectMenu("服务列表");
+        /**
+         * 查询数据
+         */
+        $("#query").click(function() {
+            $("#table").bootstrapTable('removeAll');
+            $("#table").bootstrapTable('refresh');
+        });
+    });
+
+    function queryParams(params) {
+        params.serviceName = $("#serviceName").val();
+        params.providerName = $("#providerName").val();
+        params.group = $("#group").val();
+        return params;
+    }
+
+    function setWeight() {
+        var row = $("#table").bootstrapTable('getSelections');
+        if(row.length === 0) {
+            $("#message").html("请选择一行！");
+            $("#messageModal").modal();
+            return;
+        }
+        var url = row[0].url;
+        var serviceName = row[0].serviceName;
+        var impl = row[0].impl;
+        var providerName = row[0].providerName;
+        $("#tmpUrl").val(url);
+        $("#tmpServiceName").val(serviceName);
+        $("#tmpImpl").val(impl);
+        $("#tmpProviderName").val(providerName);
+        $("#weight").val("");
+        $("#setWeightModal").modal();
+    }
+
+    function submitWeight() {
+        var providerName = $("#tmpProviderName").val();
+        var url = $("#tmpUrl").val();
+        var serviceName = $("#tmpServiceName").val();
+        var impl = $("#tmpImpl").val();
+        var weight = $("#weight").val();
+        var param = {
+            "providerName": providerName,
+            "url": url,
+            "serviceName": serviceName,
+            "impl": impl,
+            "weight": weight
+        }
+        $.ajax({
+            url: "/setServiceWeight",
+            type: "POST",
+            dataType: "json",
+            headers:{
+                'Content-Type':'application/json;charset=UTF-8',
+            },
+            data: JSON.stringify(param),
+            success: function (data) {
+                if(0 !== data.responseCode) {
+                    $("#message").html("设置权重出错:" + data.responseMessage);
+                    $("#messageModal").modal();
+                } else {
+                    $("#setWeightModal").modal('hide');
+                    $("#message").html("设置成功");
+                    $("#messageModal").modal();
+                    $("#table").bootstrapTable('removeAll');
+                    $("#table").bootstrapTable('refresh');
+                }
+            },
+            error: function (data) {
+                $("#setWeightModal").modal('hide');
+                $("#message").html("设置权重错误，请稍后再试");
+                $("#messageModal").modal();
+            }
+        });
+    }
+</script>
+</body>
+</html>
