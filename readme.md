@@ -76,3 +76,6 @@ LoadBalanceEnum.WEIGHT:按权重选择
 ```
 # jar包下载
 https://github.com/3ylh3/RPCDemo/releases
+
+# 控制台使用
+克隆web模块后修改配置文件中端口和nacos地址，打包启动即可访问控制台。
