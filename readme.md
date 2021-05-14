@@ -1,5 +1,5 @@
 # rpcdemo
-基于http传输协议以及fst序列化协议的rpc框架。
+基于http传输协议以及fst序列化协议，使用ncaos作为注册中心的rpc框架。
 # 使用
 引入jar包：
 
